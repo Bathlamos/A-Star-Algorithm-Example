@@ -1,6 +1,4 @@
 # A* Algorithm Example
-A race between entities on a grid with obstacles using the A* algorithm.
-
 The purpose of this repository is to experiment with an informed search
 algorithm, which will include a representation of the world, an algorithm for search, and
 the observation of some metrics associated with the search algorithms you are using.
