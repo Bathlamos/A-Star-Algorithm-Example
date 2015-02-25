@@ -205,7 +205,7 @@
             <properties>
               <font size="48" style="0"/>
               <foreground color="-3684409"/>
-              <text value="A* Search Algorithms  "/>
+              <text value="A* Search Algorithm "/>
             </properties>
           </component>
         </children>
