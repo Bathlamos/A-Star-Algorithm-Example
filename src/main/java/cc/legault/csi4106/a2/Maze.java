@@ -1,3 +1,11 @@
+/**
+ * Philippe Legault - 6376254
+ *
+ * CSI 4106 - Artificial Intelligence I
+ * University of Ottawa
+ * February 2015
+ */
+
 package cc.legault.csi4106.a2;
 
 import javax.swing.*;
@@ -5,10 +13,12 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.awt.geom.Point2D;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Implements a display for a maze (or world)
+ */
 public class Maze extends JPanel implements MouseListener, MouseMotionListener {
 
     public static final char SMILEY = 'S',
@@ -31,12 +41,18 @@ public class Maze extends JPanel implements MouseListener, MouseMotionListener {
     private Point homePosition;
     private double zoomFactor;
 
+    /**
+     * A Maze is based on a map, typically generated with the WorldGenerator class.
+     */
     public Maze(char[][] map){
         setMap(map);
         addMouseListener(this);
         addMouseMotionListener(this);
     }
 
+    /**
+     * Initializes the display
+     */
     public void setMap(char[][] map){
         this.map = map;
         mapHeight = map.length;
@@ -52,14 +68,23 @@ public class Maze extends JPanel implements MouseListener, MouseMotionListener {
         repaint();
     }
 
+    /**
+     * Returns the map backing the display.
+     */
     public char[][] getMap(){
         return map;
     }
 
+    /**
+     * Returns the position of the "home" cell in the map. We assume that there is only one.
+     */
     public Point getHomePosition(){
         return homePosition;
     }
 
+    /**
+     * Returns the set of Points where smileys are set.
+     */
     public Set<Point> getSmileys(){
         Set<Point> smileys = new HashSet<Point>();
         for(int i = 0; i < map.length; i++){

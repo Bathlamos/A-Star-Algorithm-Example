@@ -48,22 +48,34 @@ public class Window implements ActionListener{
         return wrapper;
     }
 
+    /**
+     * Processes the click of the "Execute" button, and change of world.
+     */
     @Override
     public void actionPerformed(ActionEvent e) {
         if(e.getSource() == executeButton){
+            //Execute the program
             MazeRunner solver = new MazeRunner();
             Point home = maze.getHomePosition();
 
             StringBuilder sb = new StringBuilder();
+            Point winner = null;
+            int numMoves = Integer.MAX_VALUE;
             for(Point smiley: maze.getSmileys()) {
                 try {
+                    //Execute A* for the smiley
                     List<Point> points = solver.execute(maze, (int) smiley.getX(), (int) smiley.getY(),
                             (int) home.getX(), (int) home.getY());
-
+                    //Output the path for the smiley
                     sb.append(String.format("Smiley (%d, %d) found home via", (int) smiley.getX(), (int) smiley.getY()));
                     for(Point p: points)
                         sb.append(String.format("\n   (%d, %d) ", (int) p.getX(), (int) p.getY()));
-                    sb.append("\nand expanding " + solver.getNumberOfNodesVisited() + " nodes.\n\n");
+                    sb.append("\nand expanding " + solver.getNumberOfNodesVisited() + " nodes\nwith a path of " + points.size() + " cells.\n\n");
+
+                    if(winner == null || numMoves > points.size()){
+                        winner = smiley;
+                        numMoves = points.size();
+                    }
 
                 }catch(RuntimeException ex){
                     sb.append(String.format("The house can't be reached by smiley (%d, %d).\n",
@@ -71,10 +83,14 @@ public class Window implements ActionListener{
                 }
             }
 
+            sb.append(String.format("\nSmiley (%d, %d) is the winner,\nwith %d moves", (int) winner.getX(), (int) winner.getY(), numMoves));
+
+            //Outputs the results
             execResults.setText(sb.toString());
             wrapper.validate();
 
         } else if(e.getSource() == mapSelector){
+            //Switch map
             String map = (String) mapSelector.getSelectedItem();
             if(map.equals("Default"))
                 maze.setMap(WorldGenerator.getDefaultWorld());

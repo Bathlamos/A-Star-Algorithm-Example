@@ -17,7 +17,7 @@ import java.awt.*;
 public class Main {
 
     public static void main(String[] args){
-
+        //Creates a JFrame and shows it.
         JFrame frame = new JFrame("CSI 4106 Assignment 2 -- Informed Search Algorithms");
         frame.setContentPane(new Window(new Maze(WorldGenerator.getDefaultWorld())).getWrapper());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
