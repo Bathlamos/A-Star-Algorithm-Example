@@ -5,6 +5,9 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.geom.Point2D;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Maze extends JPanel implements MouseListener, MouseMotionListener {
 
@@ -20,25 +23,53 @@ public class Maze extends JPanel implements MouseListener, MouseMotionListener {
             EMPTY_HOVER_COLOR = new Color(214, 218, 219),
             HOME_COLOR = new Color(52, 152, 219);
 
-    private final char[][] map;
-    private final int mapWidth, mapHeight;
+    private char[][] map;
+    private int mapWidth, mapHeight;
     private final double padding = 0.1; // In percent
-    private Dimension origin;
-    private Dimension mousePosition;
+    private Point origin;
+    private Point mousePosition;
+    private Point homePosition;
     private double zoomFactor;
 
     public Maze(char[][] map){
-        this.map = map;
-        mapHeight = map.length;
-        int width = 0;
-        for(char[] c: map)
-            if(c.length > width)
-                width = c.length;
-        mapWidth = width;
-
+        setMap(map);
         addMouseListener(this);
         addMouseMotionListener(this);
     }
+
+    public void setMap(char[][] map){
+        this.map = map;
+        mapHeight = map.length;
+        int width = 0;
+        for(int i = 0; i < map.length; i++){
+            if(map[i].length > width)
+                width = map[i].length;
+            for(int j = 0; j < map[i].length; j++)
+                if(map[i][j] == HOME)
+                    homePosition = new Point(i, j);
+        }
+        mapWidth = width;
+        repaint();
+    }
+
+    public char[][] getMap(){
+        return map;
+    }
+
+    public Point getHomePosition(){
+        return homePosition;
+    }
+
+    public Set<Point> getSmileys(){
+        Set<Point> smileys = new HashSet<Point>();
+        for(int i = 0; i < map.length; i++){
+            for(int j = 0; j < map[i].length; j++)
+                if(map[i][j] == SMILEY)
+                    smileys.add(new Point(i, j));
+        }
+        return smileys;
+    }
+
 
     @Override
     public void paint(Graphics g) {
@@ -55,7 +86,7 @@ public class Maze extends JPanel implements MouseListener, MouseMotionListener {
         else
             zoomFactor = panelHeight * (1 - 2 * padding) / mapHeight;
 
-        origin = new Dimension((int) ((panelWidth - mapWidth * zoomFactor) / 2),
+        origin = new Point((int) ((panelWidth - mapWidth * zoomFactor) / 2),
                 (int) ((panelHeight - mapHeight * zoomFactor) / 2));
 
         //Draw the background
@@ -66,11 +97,29 @@ public class Maze extends JPanel implements MouseListener, MouseMotionListener {
         g2.setRenderingHint(
                 RenderingHints.KEY_TEXT_ANTIALIASING,
                 RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g2.setFont(new Font(g2.getFont().getFontName(), Font.PLAIN, 25));
-        FontMetrics fm = g.getFontMetrics();
+        Font bigFont = new Font(g2.getFont().getFontName(), Font.PLAIN, 25);
+        Font smallFont = new Font(g2.getFont().getFontName(), Font.PLAIN, 15);
+
+        double cellDimen = zoomFactor * mapWidth / map.length;
+
+        //Draw the numbers
+        g2.setFont(smallFont);
+        g2.setColor(Color.BLACK);
+        FontMetrics fm = g2.getFontMetrics();
+        for(int i = 0; i < map.length; i++){
+            String text = i + "";
+            int x = ((int) cellDimen - fm.stringWidth(text)) / 2;
+            int y = (fm.getAscent() + ((int) cellDimen - (fm.getAscent() + fm.getDescent())) / 2);
+            g2.drawString(text, (int) (origin.getX() + x - cellDimen), (int) (origin.getY() + i * cellDimen + y));
+        }
+        for(int i = 0; i < map[0].length; i++){
+            String text = i + "";
+            int x = ((int) cellDimen - fm.stringWidth(text)) / 2;
+            int y = (fm.getAscent() + ((int) cellDimen - (fm.getAscent() + fm.getDescent())) / 2);
+            g2.drawString(text, (int) (origin.getX() + i * cellDimen + x), (int) (origin.getY() + y - cellDimen));
+        }
 
         //Draw the board
-        double cellDimen = zoomFactor * mapWidth / map.length;
         boolean hovering = false;
         for(int i = 0; i < map.length; i++){
             for(int j = 0; j < map[i].length; j++){
@@ -87,12 +136,12 @@ public class Maze extends JPanel implements MouseListener, MouseMotionListener {
                         break;
                 }
 
-                int anchorX = (int) (origin.getWidth() + cellDimen * j);
-                int anchorY = (int) (origin.getHeight() + cellDimen * i);
+                int anchorX = (int) (origin.getX() + cellDimen * j);
+                int anchorY = (int) (origin.getY() + cellDimen * i);
 
                 //Check if we're hovering an empty cell
                 if((type == EMPTY || type == SMILEY) && mousePosition != null &&
-                        mousePosition.getWidth() == i && mousePosition.getHeight() == j){
+                        mousePosition.getX() == i && mousePosition.getY() == j){
 
                     g2.setColor(type == SMILEY? SMILEY_HOVER_COLOR: EMPTY_HOVER_COLOR);
                     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -107,8 +156,19 @@ public class Maze extends JPanel implements MouseListener, MouseMotionListener {
                 else if(type == HOME)
                     text = "⌂";
 
-                if(text != null) {
-                    g2.setColor(Color.white);
+                g2.setColor(Color.white);
+                if(mousePosition != null && mousePosition.getX() == i && mousePosition.getY() == j && type != SMILEY){
+                    text = String.format("(%d, %d)", i, j);
+                    if(type == EMPTY)
+                        g2.setColor(Color.BLACK);
+                    g2.setFont(smallFont);
+                    fm = g2.getFontMetrics();
+                    int x = ((int) cellDimen - fm.stringWidth(text)) / 2;
+                    int y = (fm.getAscent() + ((int) cellDimen - (fm.getAscent() + fm.getDescent())) / 2);
+                    g2.drawString(text, anchorX + x, anchorY + y);
+                } else if(text != null) {
+                    g2.setFont(bigFont);
+                    fm = g2.getFontMetrics();
                     int x = ((int) cellDimen - fm.stringWidth(text)) / 2;
                     int y = (fm.getAscent() + ((int) cellDimen - (fm.getAscent() + fm.getDescent())) / 2);
                     g2.drawString(text, anchorX + x, anchorY + y);
@@ -125,8 +185,8 @@ public class Maze extends JPanel implements MouseListener, MouseMotionListener {
     public void mouseClicked(MouseEvent e) {
         mousePosition = getMapCell(e.getX(), e.getY());
         if(mousePosition != null) {
-            int i = (int) mousePosition.getWidth();
-            int j = (int) mousePosition.getHeight();
+            int i = (int) mousePosition.getX();
+            int j = (int) mousePosition.getY();
             if(map[i][j] == SMILEY)
                 map[i][j] = EMPTY;
             else if(map[i][j] == EMPTY)
@@ -156,13 +216,13 @@ public class Maze extends JPanel implements MouseListener, MouseMotionListener {
         repaint();
     }
 
-    private Dimension getMapCell(double x, double y){
-        int i = (int) ((x - origin.getWidth()) / zoomFactor);
-        int j = (int) ((y - origin.getHeight()) / zoomFactor);
+    private Point getMapCell(double x, double y){
+        int i = (int) ((y - origin.getY()) / zoomFactor);
+        int j = (int) ((x - origin.getX()) / zoomFactor);
         if(i < 0 || i >= mapWidth)
             return null;
         else if(j < 0 || j >= map[i].length)
             return null;
-        return new Dimension(j, i);
+        return new Point(i, j);
     }
 }
